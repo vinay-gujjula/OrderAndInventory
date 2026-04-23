@@ -2,43 +2,39 @@ name: Deploy Microservices to EC2
 
 on:
   push:
-    branches: [ "master" ] # Update this if your primary branch is named 'master'
+    branches: [ "master" ]
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Get the code from the repository
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # Step 2: Prepare the Java environment
-      - name: Set up JDK 17 # Change '17' if you are using Java 11 or 21
+      - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
 
-      # Step 3: Build the Microservices
       - name: Build with Maven
-        # Assuming you have a parent pom.xml. If not, you may need to cd into each folder to build.
         run: mvn clean install -DskipTests
 
-      # Step 4: Transfer ALL 6 compiled .jar files to your EC2 instance
-      - name: Copy JAR files to EC2
+      # ==========================================
+      # PHASE 1: DEPLOY TO MANAGEMENT SERVER
+      # ==========================================
+      - name: Copy JARs to Management Server
         uses: appleboy/scp-action@v0.1.4
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          # This line now includes all 6 of your actual folder names
-          source: "api-gateway/target/*.jar,auth-service/target/*.jar,config-server/target/*.jar,eureka-server/target/*.jar,order-service/target/*.jar,product-service/target/*.jar"
+          source: "config-server/target/*.jar,eureka-server/target/*.jar,api-gateway/target/*.jar,auth-service/target/*.jar"
           target: "/home/${{ secrets.EC2_USERNAME }}/microservices"
           strip_components: 2
 
-      # Step 5: Log into EC2 and restart all 6 services
-      - name: SSH into EC2 and run services
+      - name: Run Services on Management Server
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST }}
@@ -47,19 +43,44 @@ jobs:
           script: |
             cd /home/${{ secrets.EC2_USERNAME }}/microservices
             
-            # Kill any currently running Java applications to free up the ports
             pkill -f 'java -jar' || true
             
-            # Start all 6 services in the background
-            nohup java -jar config-server*.jar > config-server.log 2>&1 &
-            sleep 10 # Giving config server a moment to start
+            nohup java -jar config-server*.jar < /dev/null > config-server.log 2>&1 &
+            sleep 10
             
-            nohup java -jar eureka-server*.jar > eureka-server.log 2>&1 &
-            sleep 15 # Giving eureka a moment to start
+            nohup java -jar eureka-server*.jar < /dev/null > eureka-server.log 2>&1 &
+            sleep 15
             
-            nohup java -jar auth-service*.jar > auth-service.log 2>&1 &
-            nohup java -jar api-gateway*.jar > api-gateway.log 2>&1 &
-            nohup java -jar order-service*.jar > order-service.log 2>&1 &
-            nohup java -jar product-service*.jar > product-service.log 2>&1 &
+            nohup java -jar auth-service*.jar < /dev/null > auth-service.log 2>&1 &
+            nohup java -jar api-gateway*.jar < /dev/null > api-gateway.log 2>&1 &
+            
+            exit 0
+
+      # ==========================================
+      # PHASE 2: DEPLOY TO WORKER SERVER
+      # ==========================================
+      - name: Copy JARs to Worker Server
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.WORKER_HOST }}
+          username: ${{ secrets.WORKER_USERNAME }}
+          key: ${{ secrets.WORKER_SSH_KEY }}
+          source: "order-service/target/*.jar,product-service/target/*.jar"
+          target: "/home/${{ secrets.WORKER_USERNAME }}/microservices"
+          strip_components: 2
+
+      - name: Run Services on Worker Server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.WORKER_HOST }}
+          username: ${{ secrets.WORKER_USERNAME }}
+          key: ${{ secrets.WORKER_SSH_KEY }}
+          script: |
+            cd /home/${{ secrets.WORKER_USERNAME }}/microservices
+            
+            pkill -f 'java -jar' || true
+            
+            nohup java -jar order-service*.jar < /dev/null > order-service.log 2>&1 &
+            nohup java -jar product-service*.jar < /dev/null > product-service.log 2>&1 &
             
             exit 0
