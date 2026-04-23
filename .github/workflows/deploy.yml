@@ -2,7 +2,7 @@ name: Deploy Microservices to EC2
 
 on:
   push:
-    branches: [ "main" ] # Update this if your primary branch is named 'master'
+    branches: [ "master" ] # Update this if your primary branch is named 'master'
 
 jobs:
   build-and-deploy:
