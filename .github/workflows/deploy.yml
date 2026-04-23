@@ -61,3 +61,5 @@ jobs:
             nohup java -jar api-gateway*.jar > api-gateway.log 2>&1 &
             nohup java -jar order-service*.jar > order-service.log 2>&1 &
             nohup java -jar product-service*.jar > product-service.log 2>&1 &
+            
+            exit 0
