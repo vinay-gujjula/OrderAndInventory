@@ -24,39 +24,39 @@ jobs:
       # ==========================================
       # PHASE 1: DEPLOY TO MANAGEMENT SERVER
       # ==========================================
-      - name: Copy JARs to Management Server
-        uses: appleboy/scp-action@v0.1.4
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          source: "config-server/target/*.jar,eureka-server/target/*.jar,api-gateway/target/*.jar,auth-service/target/*.jar"
-          target: "/home/${{ secrets.EC2_USERNAME }}/microservices"
-          strip_components: 2
-
-      - name: Run Services on Management Server
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
-            cd /home/${{ secrets.EC2_USERNAME }}/microservices
-            
-            pkill -f 'java -jar' || true
-            
-            nohup java -jar config-server*.jar < /dev/null > config-server.log 2>&1 &
-            sleep 20
-            
-            nohup java -jar eureka-server*.jar < /dev/null > eureka-server.log 2>&1 &
-            sleep 30
-            
-            nohup java -jar auth-service*.jar < /dev/null > auth-service.log 2>&1 &
-            sleep 20
-            
-            nohup java -jar api-gateway*.jar < /dev/null > api-gateway.log 2>&1 &
-            
-            exit 0
+#      - name: Copy JARs to Management Server
+#        uses: appleboy/scp-action@v0.1.4
+#        with:
+#          host: ${{ secrets.EC2_HOST }}
+#          username: ${{ secrets.EC2_USERNAME }}
+#          key: ${{ secrets.EC2_SSH_KEY }}
+#          source: "config-server/target/*.jar,eureka-server/target/*.jar,api-gateway/target/*.jar,auth-service/target/*.jar"
+#          target: "/home/${{ secrets.EC2_USERNAME }}/microservices"
+#          strip_components: 2
+#
+#      - name: Run Services on Management Server
+#        uses: appleboy/ssh-action@v1.0.3
+#        with:
+#          host: ${{ secrets.EC2_HOST }}
+#          username: ${{ secrets.EC2_USERNAME }}
+#          key: ${{ secrets.EC2_SSH_KEY }}
+#          script: |
+#            cd /home/${{ secrets.EC2_USERNAME }}/microservices
+#
+#            pkill -f 'java -jar' || true
+#
+#            nohup java -jar config-server*.jar < /dev/null > config-server.log 2>&1 &
+#            sleep 20
+#
+#            nohup java -jar eureka-server*.jar < /dev/null > eureka-server.log 2>&1 &
+#            sleep 30
+#
+#            nohup java -jar auth-service*.jar < /dev/null > auth-service.log 2>&1 &
+#            sleep 20
+#
+#            nohup java -jar api-gateway*.jar < /dev/null > api-gateway.log 2>&1 &
+#
+#            exit 0
 
       # ==========================================
       # PHASE 2: DEPLOY TO WORKER SERVER
@@ -82,7 +82,7 @@ jobs:
             
             pkill -f 'java -jar' || true
             
-            nohup java -jar order-service*.jar < /dev/null > order-service.log 2>&1 &
+            nohup java -jar order-service*.jar < /dev/null > order-service.log 2>&1 & sleep 45
             nohup java -jar product-service*.jar < /dev/null > product-service.log 2>&1 &
             
             exit 0
