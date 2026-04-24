@@ -1,11 +1,9 @@
 server:
-  port: 8082
+  port: 8081
 
 spring:
   application:
-    name: order-service
-  config:
-    import: optional:configserver:http://localhost:8888
+    name: auth-service
   datasource:
     url: jdbc:mysql://capstone-db.cng4m02w2jrz.ap-southeast-2.rds.amazonaws.com:3306/capstone
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -14,8 +12,8 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
-#    database-platform: org.hibernate.dialect.MySQL8Dialect
-    show-sql: true
+    database-platform: org.hibernate.dialect.MySQL8Dialect
+    show-sql: false
 
 eureka:
   client:
@@ -23,3 +21,11 @@ eureka:
       defaultZone: http://172.31.27.189/eureka/
     register-with-eureka: true
     fetch-registry: true
+
+jwt:
+  secret: mySecretKey
+
+logging:
+  level:
+    org.springframework.security: DEBUG
+    com.example.authservice: DEBUG
