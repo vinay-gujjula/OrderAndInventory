@@ -4,10 +4,10 @@ server:
 spring:
   application:
     name: config-server
-  profiles:
-    active: native
   cloud:
     config:
       server:
-        native:
-          search-locations: classpath:/config
+        git:
+          uri: https://github.com/vinay-gujjula/microservices-config.git
+          default-label: main
+          clone-on-start: true
